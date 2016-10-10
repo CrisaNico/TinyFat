@@ -1,0 +1,76 @@
+<h2>
+	Nuova persona
+</h2>
+<form class="w3-container">
+	<label>Nome</label>
+	<input class="w3-input" type="text" name="nome" autofocus required />
+	<label>Codice Fiscale</label>
+	<input class="w3-input" type="text" name="cf" maxlength="16" />
+	<label>Data di nascita</label>
+	<input class="w3-input" type="date" name="dn" />
+	<label>Note</label>
+	<textarea class="w3-input" name="note"></textarea>
+</form>
+<p class="ar">
+	<button onclick="a.p.save()" class="w3-btn w3-blue">Salva</button>
+	<a href="#/people" class="w3-btn w3-green" accesskey="n">Nuovo</a>
+	<a href="#/peoplelist" class="w3-btn" accesskey="l">Elenco</a>
+	<button onclick="a.p.remove()" class="w3-btn w3-red">Elimina</button>
+</p>
+<script>
+a.p={}
+a.p.remove=function(){
+	var rid=a.p.data._id || false
+	if (!rid) return
+	$.ajax({
+		type : 'DELETE',
+		url: a.s+rid+'?rev='+a.p.data._rev,
+		//data: JSON.stringify(a.p.data),
+		contentType: 'application/json',
+		success : function(response){
+			var r=JSON.parse(response)
+			a.goTo('peoplelist')
+		}
+	})
+}
+a.p.data={nome:null,cf:null,type:'persona',dn:null,note:null} //modello dell'oggetto, vuoto
+a.p.fillForm=function(data){
+	var serverData=JSON.parse(data)
+	for (k in serverData){
+		a.p.data[k]=serverData[k]
+	}
+	$('h2').text(a.p.data.nome)
+	for (keys in a.p.data){
+		$('[name="'+keys+'"]').val(a.p.data[keys])
+	}
+}
+a.p.save=function(){
+	var rid=a.p.data._id||''
+	//aggiorno l'array a.p.data, valorizzandolo in base a quanto compilato nel form
+	for (k in a.p.data){
+		var sel='[name="'+k+'"]'
+		if ($(sel).length) a.p.data[k]=$(sel).val() || null
+	}
+	$.ajax({
+		//se voglio aggiornare il documento faccio una richiesta PUT, se no una richiesta POST. Per capire se devo aggiornare controllo il campo _id. Se c'è, aggiorno, se no inserisco. 
+		type : (a.p.data._id) ? 'PUT' : 'POST',
+		url: a.s+rid,
+		data: JSON.stringify(a.p.data),
+		contentType: 'application/json',
+		success : function(response){
+			console.log(response)
+			var r=JSON.parse(response)
+			//se ho inserito un record che non esisteva, ricarico la pagina, posizionandomi su q
+			if (!rid) a.goTo('people/'+r.id)
+		}
+	})
+}
+a.p.pr=function(){
+	//se ho specificato un ID nell'url tento di recuperare le informazioni relative a quel documento nel database
+	if (a.id) 
+	$.ajax({url: a.s +a.id}).then(a.p.fillForm)
+	//$('input').on('change',a.p.save)
+	$('[name="nome"]').focus()
+}
+$(a.p.pr)
+</script>
